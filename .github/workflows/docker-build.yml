@@ -1,0 +1,53 @@
+name: Docker Build and Push
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Extract version from tag
+      id: get_version
+      run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/v}
+      if: startsWith(github.ref, 'refs/tags/')
+
+    - name: Build and push server image
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        file: ./Dockerfile.server
+        push: ${{ github.event_name != 'workflow_dispatch' }}
+        tags: |
+          ea7klk/bm-lh-v2-server:latest
+          ${{ startsWith(github.ref, 'refs/tags/') && format('ea7klk/bm-lh-v2-server:{0}', steps.get_version.outputs.VERSION) || '' }}
+
+    - name: Build and push client image
+      uses: docker/build-push-action@v2
+      with:
+        context: ./client
+        file: ./client/Dockerfile
+        push: ${{ github.event_name != 'workflow_dispatch' }}
+        tags: |
+          ea7klk/bm-lh-v2-client:latest
+          ${{ startsWith(github.ref, 'refs/tags/') && format('ea7klk/bm-lh-v2-client:{0}', steps.get_version.outputs.VERSION) || '' }}
+
+    - name: Summary
+      run: |
+        echo "Server image: ea7klk/bm-lh-v2-server:${{ steps.get_version.outputs.VERSION || 'latest' }}"
+        echo "Client image: ea7klk/bm-lh-v2-client:${{ steps.get_version.outputs.VERSION || 'latest' }}"
