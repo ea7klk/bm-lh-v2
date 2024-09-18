@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Lh {
+  id              Int      @id @default(autoincrement())
+  timestamp       DateTime
+  linkName        String?
+  slot            Float?
+  sourceId        Float?
+  destinationId   Float?
+  route           String?
+  linkCall        String?
+  sessionType     Float?
+  sourceName      String?
+  destinationCall String?
+  destinationName String?
+  state           Float?
+  start           Float?
+  stop            Float?
+  rssi            String?
+  ber             Float?
+  reflectorId     Float?
+  linkType        Float?
+  callTypes       String?
+  lossCount       Float?
+  totalCount      Float?
+  master          Float?
+  talkerAlias     String?
+  flagSet         Float?
+  event           String?
+  linkTypeName    String?
+  contextId       Float?
+  sessionId       String?
+  sourceCall      String?
+  duration        Float?
+}
+
+model Countries {
+  id        Int    @id @default(autoincrement())
+  continent String
+  country   String
+}
+
+model CountryTalkgroup {
+  id        Int    @id @default(autoincrement())
+  country   String
+  talkgroup String @unique
+  name      String
+}
+
+model ContinentCountry {
+  id                      Int    @id @default(autoincrement())
+  Continent_name          String
+  Continent_code          String
+  Country_name            String @unique
+  Two_Letter_country_code String
+}
