@@ -160,7 +160,6 @@ brandmeisterSocket.on('mqtt', async (rawData) => {
         payloadData.DestinationID === 8 || payloadData.DestinationID === 9 ||
         (payloadData.DestinationCall && payloadData.DestinationCall !== '') ||
         duration === null || duration < 2) {
-      // console.log('Ignoring data: Conditions not met');
       return;
     }
     
@@ -202,8 +201,6 @@ brandmeisterSocket.on('mqtt', async (rawData) => {
     const result = await prisma.lh.create({
       data: processedData
     });
-
-    console.log(`Data inserted into database successfully, ID: ${result.id}`);
 
     insertCount++;
     if (insertCount % 100 === 0) {
@@ -336,7 +333,6 @@ io.on('connection', async (socket) => {
     }
   });
 
-  // Updated getTalkgroups event handler
   socket.on('getTalkgroups', async ({ continent, country }) => {
     try {
       let whereClause = {};
@@ -364,31 +360,20 @@ io.on('connection', async (socket) => {
     }
   });
 
-  socket.on('getTalkgroupHistogram', async ({ talkgroup, timezoneOffset }) => {
+  socket.on('getTalkgroupHistogram', async ({ talkgroup }) => {
     try {
       const now = new Date();
       const twelveHoursAgo = new Date(now - 12 * 60 * 60 * 1000);
 
-      console.log('Fetching histogram data for talkgroup:', talkgroup);
-      console.log('Time range:', twelveHoursAgo, 'to', now);
-      console.log('Timezone offset:', timezoneOffset);
+      // Adjust start time to the nearest half hour in the past
+      twelveHoursAgo.setMinutes(twelveHoursAgo.getMinutes() >= 30 ? 30 : 0);
+      twelveHoursAgo.setSeconds(0);
+      twelveHoursAgo.setMilliseconds(0);
 
-      // First, let's check if we have any data for this talkgroup
-      const talkgroupData = await prisma.lh.findMany({
-        where: {
-          destinationId: parseFloat(talkgroup),
-          timestamp: {
-            gte: twelveHoursAgo,
-            lte: now
-          }
-        },
-        orderBy: {
-          timestamp: 'asc'
-        },
-        take: 5 // Just to check if we have any data
-      });
-
-      console.log('Sample talkgroup data:', talkgroupData);
+      // Adjust end time to the current half hour
+      now.setMinutes(now.getMinutes() >= 30 ? 30 : 0);
+      now.setSeconds(0);
+      now.setMilliseconds(0);
 
       const histogramData = await prisma.$queryRaw`
         WITH RECURSIVE
@@ -414,15 +399,11 @@ io.on('connection', async (socket) => {
           time_intervals.interval_start
       `;
 
-      console.log('Raw histogram data:', histogramData);
-
       // Convert BigInt to Number in the histogram data
       const processedHistogramData = histogramData.map(item => ({
         timeInterval: item.timeInterval,
         count: safeBigIntToNumber(item.count)
       }));
-
-      console.log('Processed histogram data:', processedHistogramData);
 
       socket.emit('talkgroupHistogram', processedHistogramData);
     } catch (error) {
