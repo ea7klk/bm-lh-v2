@@ -25,7 +25,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function AdminPage({ onBack, apiBaseUrl }) {
+function AdminPage({ onBack }) {
   const classes = useStyles();
   const [password, setPassword] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -33,7 +33,10 @@ function AdminPage({ onBack, apiBaseUrl }) {
   const [newTalkgroup, setNewTalkgroup] = useState({ country: '', talkgroup: '', name: '' });
   const [token, setToken] = useState('');
   const [editingTalkgroup, setEditingTalkgroup] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [openDialog, setOpenDialog] = useState(false);
+
+  const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
   const loadTalkgroups = useCallback(async () => {
     try {
@@ -62,6 +65,7 @@ function AdminPage({ onBack, apiBaseUrl }) {
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleSubmit = (event) => {
     event.preventDefault();
     login();
@@ -79,6 +83,7 @@ function AdminPage({ onBack, apiBaseUrl }) {
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const openEditDialog = (talkgroup) => {
     setEditingTalkgroup(talkgroup);
     setOpenDialog(true);

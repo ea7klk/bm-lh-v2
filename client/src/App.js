@@ -8,11 +8,7 @@ import AdminPage from './AdminPage';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-const getApiBaseUrl = () => {
-  return process.env.REACT_APP_API_URL || 'http://localhost:5001';
-};
-
-const API_BASE_URL = getApiBaseUrl();
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const socket = io(API_BASE_URL);
 
 const useStyles = makeStyles((theme) => ({
@@ -152,7 +148,7 @@ function App() {
   };
 
   if (showAdminPage) {
-    return <AdminPage onBack={() => setShowAdminPage(false)} apiBaseUrl={API_BASE_URL} />;
+    return <AdminPage onBack={() => setShowAdminPage(false)} />;
   }
 
   return (
