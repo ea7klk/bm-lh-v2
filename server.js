@@ -364,10 +364,31 @@ io.on('connection', async (socket) => {
     }
   });
 
-  socket.on('getTalkgroupHistogram', async ({ talkgroup }) => {
+  socket.on('getTalkgroupHistogram', async ({ talkgroup, timezoneOffset }) => {
     try {
       const now = new Date();
       const twelveHoursAgo = new Date(now - 12 * 60 * 60 * 1000);
+
+      console.log('Fetching histogram data for talkgroup:', talkgroup);
+      console.log('Time range:', twelveHoursAgo, 'to', now);
+      console.log('Timezone offset:', timezoneOffset);
+
+      // First, let's check if we have any data for this talkgroup
+      const talkgroupData = await prisma.lh.findMany({
+        where: {
+          destinationId: parseFloat(talkgroup),
+          timestamp: {
+            gte: twelveHoursAgo,
+            lte: now
+          }
+        },
+        orderBy: {
+          timestamp: 'asc'
+        },
+        take: 5 // Just to check if we have any data
+      });
+
+      console.log('Sample talkgroup data:', talkgroupData);
 
       const histogramData = await prisma.$queryRaw`
         WITH RECURSIVE
@@ -380,28 +401,28 @@ io.on('connection', async (socket) => {
         )
         SELECT 
           strftime('%Y-%m-%d %H:%M', time_intervals.interval_start) as timeInterval,
-          COUNT(lh.id) as count,
-          COALESCE(SUM(lh.duration), 0) as totalDuration,
-          GROUP_CONCAT(DISTINCT lh.sourceCall) as uniqueSourceCalls
+          COUNT(lh.id) as count
         FROM 
           time_intervals
         LEFT JOIN 
-          lh ON lh.timestamp >= time_intervals.interval_start 
-          AND lh.timestamp < datetime(time_intervals.interval_start, '+30 minutes')
-          AND lh.destinationId = ${parseInt(talkgroup)}
+          lh ON strftime('%Y-%m-%d %H:%M', lh.timestamp / 1000, 'unixepoch') >= strftime('%Y-%m-%d %H:%M', time_intervals.interval_start)
+          AND strftime('%Y-%m-%d %H:%M', lh.timestamp / 1000, 'unixepoch') < strftime('%Y-%m-%d %H:%M', datetime(time_intervals.interval_start, '+30 minutes'))
+          AND lh.destinationId = ${parseFloat(talkgroup)}
         GROUP BY 
           time_intervals.interval_start
         ORDER BY 
           time_intervals.interval_start
       `;
 
+      console.log('Raw histogram data:', histogramData);
+
       // Convert BigInt to Number in the histogram data
       const processedHistogramData = histogramData.map(item => ({
         timeInterval: item.timeInterval,
-        count: safeBigIntToNumber(item.count),
-        totalDuration: safeBigIntToNumber(item.totalDuration),
-        uniqueSourceCalls: item.uniqueSourceCalls ? item.uniqueSourceCalls.split(',').length : 0
+        count: safeBigIntToNumber(item.count)
       }));
+
+      console.log('Processed histogram data:', processedHistogramData);
 
       socket.emit('talkgroupHistogram', processedHistogramData);
     } catch (error) {

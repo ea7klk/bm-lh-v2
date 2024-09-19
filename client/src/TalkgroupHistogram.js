@@ -56,7 +56,8 @@ function TalkgroupHistogram() {
   const fetchHistogramData = useCallback(() => {
     if (selectedTalkgroup) {
       console.log('Fetching histogram data for talkgroup:', selectedTalkgroup);
-      socket.emit('getTalkgroupHistogram', { talkgroup: selectedTalkgroup });
+      const timezoneOffset = -new Date().getTimezoneOffset();
+      socket.emit('getTalkgroupHistogram', { talkgroup: selectedTalkgroup, timezoneOffset });
     }
   }, [selectedTalkgroup]);
 
@@ -128,8 +129,20 @@ function TalkgroupHistogram() {
     setSelectedTalkgroup(newTalkgroup);
   };
 
+  const formatTimeInterval = (timeInterval) => {
+    const date = new Date(timeInterval);
+    return date.toLocaleString('en-US', { 
+      year: 'numeric', 
+      month: '2-digit', 
+      day: '2-digit', 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false
+    });
+  };
+
   const chartData = {
-    labels: histogramData.map(item => item.timeInterval),
+    labels: histogramData.map(item => formatTimeInterval(item.timeInterval)),
     datasets: [
       {
         label: 'Event Count',
@@ -149,7 +162,7 @@ function TalkgroupHistogram() {
       x: {
         title: {
           display: true,
-          text: 'Time Interval',
+          text: 'Time Interval (Local Time)',
         },
       },
       y: {
@@ -202,21 +215,17 @@ function TalkgroupHistogram() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Time Interval</TableCell>
+              <TableCell>Time Interval (Local Time)</TableCell>
               <TableCell align="right">Call Count</TableCell>
-              <TableCell align="right">Total Duration (s)</TableCell>
-              <TableCell align="right">Unique Callers</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {histogramData.map((row) => (
               <TableRow key={row.timeInterval}>
                 <TableCell component="th" scope="row">
-                  {row.timeInterval}
+                  {formatTimeInterval(row.timeInterval)}
                 </TableCell>
                 <TableCell align="right">{row.count}</TableCell>
-                <TableCell align="right">{row.totalDuration.toFixed(2)}</TableCell>
-                <TableCell align="right">{row.uniqueSourceCalls}</TableCell>
               </TableRow>
             ))}
           </TableBody>
