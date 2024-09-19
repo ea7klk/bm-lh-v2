@@ -84,6 +84,15 @@ function TalkgroupHistogram() {
 
     socket.on('talkgroupHistogram', (data) => {
       console.log('Received histogram data:', data);
+      const now = new Date();
+      now.setMinutes(0, 0, 0); // Set to the start of the current hour
+      const latestInterval = now.toISOString().slice(0, 13) + ':00'; // Format: YYYY-MM-DDTHH:00
+      
+      // Ensure the histogram includes the latest interval
+      if (data.length > 0 && data[data.length - 1].timeInterval !== latestInterval) {
+        data.push({ timeInterval: latestInterval, count: 0 });
+      }
+      
       setHistogramData(data);
     });
 
@@ -135,8 +144,7 @@ function TalkgroupHistogram() {
       year: 'numeric', 
       month: '2-digit', 
       day: '2-digit', 
-      hour: '2-digit', 
-      minute: '2-digit',
+      hour: '2-digit',
       hour12: false
     });
   };

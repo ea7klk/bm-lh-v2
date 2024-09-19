@@ -203,7 +203,10 @@ brandmeisterSocket.on('mqtt', async (rawData) => {
     });
 
     insertCount++;
-    if (insertCount % 100 === 0) {
+    if (insertCount % 25 === 0) {
+      console.log(`Inserted ${insertCount} records. Latest ID: ${result.id}`);
+    }
+    if (insertCount % 1000 === 0) {
       await cleanupOldRecords();
     }
 
@@ -363,29 +366,26 @@ io.on('connection', async (socket) => {
   socket.on('getTalkgroupHistogram', async ({ talkgroup }) => {
     try {
       const now = new Date();
+      now.setMinutes(0, 0, 0); // Set to the start of the current hour
       const twelveHoursAgo = new Date(now - 12 * 60 * 60 * 1000);
-
-      // Round down to the nearest 30-minute interval
-      now.setMinutes(now.getMinutes() - now.getMinutes() % 30, 0, 0);
-      twelveHoursAgo.setMinutes(twelveHoursAgo.getMinutes() - twelveHoursAgo.getMinutes() % 30, 0, 0);
 
       const histogramData = await prisma.$queryRaw`
         WITH RECURSIVE
         time_intervals(interval_start) AS (
           SELECT datetime(${twelveHoursAgo.toISOString()})
           UNION ALL
-          SELECT datetime(interval_start, '+30 minutes')
+          SELECT datetime(interval_start, '+1 hour')
           FROM time_intervals
-          WHERE datetime(interval_start, '+30 minutes') <= ${now.toISOString()}
+          WHERE datetime(interval_start, '+1 hour') <= ${now.toISOString()}
         )
         SELECT 
-          strftime('%Y-%m-%d %H:%M', time_intervals.interval_start) as timeInterval,
+          strftime('%Y-%m-%d %H:00', time_intervals.interval_start) as timeInterval,
           COUNT(lh.id) as count
         FROM 
           time_intervals
         LEFT JOIN 
           lh ON datetime(lh.timestamp / 1000, 'unixepoch') >= time_intervals.interval_start
-          AND datetime(lh.timestamp / 1000, 'unixepoch') < datetime(time_intervals.interval_start, '+30 minutes')
+          AND datetime(lh.timestamp / 1000, 'unixepoch') < datetime(time_intervals.interval_start, '+1 hour')
           AND lh.destinationId = ${parseFloat(talkgroup)}
         GROUP BY 
           time_intervals.interval_start
