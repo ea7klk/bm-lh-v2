@@ -1,7 +1,32 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import { Container, Typography, Button, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
+
+const useStyles = makeStyles((theme) => ({
+  title: {
+    textAlign: 'center',
+    marginBottom: theme.spacing(3),
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    '& > *': {
+      margin: theme.spacing(1),
+      width: '25ch',
+    },
+  },
+  table: {
+    marginTop: theme.spacing(3),
+  },
+  actionButton: {
+    margin: theme.spacing(0, 1),
+  },
+}));
 
 function AdminPage({ onBack, apiBaseUrl }) {
+  const classes = useStyles();
   const [password, setPassword] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [talkgroups, setTalkgroups] = useState([]);
@@ -78,71 +103,82 @@ function AdminPage({ onBack, apiBaseUrl }) {
 
   if (!isLoggedIn) {
     return (
-      <div>
-        <h2>Login</h2>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Enter password"
-        />
-        <button onClick={login}>Login</button>
-        <button onClick={onBack}>Back to Main Page</button>
-      </div>
+      <Container maxWidth="sm">
+        <Typography variant="h4" className={classes.title}>Login</Typography>
+        <form className={classes.form} noValidate autoComplete="off">
+          <TextField
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            label="Password"
+            variant="outlined"
+          />
+          <Button variant="contained" color="primary" onClick={login}>Login</Button>
+          <Button variant="contained" onClick={onBack}>Back to Main Page</Button>
+        </form>
+      </Container>
     );
   }
 
   return (
-    <div>
-      <h1>CountryTalkgroup Management</h1>
-      <div>
-        <h2>Add New Talkgroup</h2>
-        <input
-          type="text"
-          value={newTalkgroup.country}
-          onChange={(e) => setNewTalkgroup({ ...newTalkgroup, country: e.target.value })}
-          placeholder="Country"
-        />
-        <input
-          type="text"
-          value={newTalkgroup.talkgroup}
-          onChange={(e) => setNewTalkgroup({ ...newTalkgroup, talkgroup: e.target.value })}
-          placeholder="Talkgroup"
-        />
-        <input
-          type="text"
-          value={newTalkgroup.name}
-          onChange={(e) => setNewTalkgroup({ ...newTalkgroup, name: e.target.value })}
-          placeholder="Name"
-        />
-        <button onClick={addTalkgroup}>Add Talkgroup</button>
-      </div>
-      <h2>Existing Talkgroups</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Country</th>
-            <th>Talkgroup</th>
-            <th>Name</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {talkgroups.map((tg) => (
-            <tr key={tg.id}>
-              <td>{tg.country}</td>
-              <td>{tg.talkgroup}</td>
-              <td>{tg.name}</td>
-              <td>
-                <button onClick={() => editTalkgroup(tg.id)}>Edit</button>
-                <button onClick={() => deleteTalkgroup(tg.id)}>Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <button onClick={onBack}>Back to Main Page</button>
-    </div>
+    <Container maxWidth="lg">
+      <Typography variant="h2" className={classes.title}>CountryTalkgroup Management</Typography>
+      <Paper>
+        <Box p={3}>
+          <Typography variant="h5">Add New Talkgroup</Typography>
+          <form className={classes.form} noValidate autoComplete="off">
+            <TextField
+              value={newTalkgroup.country}
+              onChange={(e) => setNewTalkgroup({ ...newTalkgroup, country: e.target.value })}
+              label="Country"
+              variant="outlined"
+            />
+            <TextField
+              value={newTalkgroup.talkgroup}
+              onChange={(e) => setNewTalkgroup({ ...newTalkgroup, talkgroup: e.target.value })}
+              label="Talkgroup"
+              variant="outlined"
+            />
+            <TextField
+              value={newTalkgroup.name}
+              onChange={(e) => setNewTalkgroup({ ...newTalkgroup, name: e.target.value })}
+              label="Name"
+              variant="outlined"
+            />
+            <Button variant="contained" color="primary" onClick={addTalkgroup}>Add Talkgroup</Button>
+          </form>
+        </Box>
+      </Paper>
+      <Typography variant="h5" style={{ marginTop: '20px' }}>Existing Talkgroups</Typography>
+      <TableContainer component={Paper} className={classes.table}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Country</TableCell>
+              <TableCell>Talkgroup</TableCell>
+              <TableCell>Name</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {talkgroups.map((tg) => (
+              <TableRow key={tg.id}>
+                <TableCell>{tg.country}</TableCell>
+                <TableCell>{tg.talkgroup}</TableCell>
+                <TableCell>{tg.name}</TableCell>
+                <TableCell>
+                  <Button variant="outlined" color="primary" className={classes.actionButton} onClick={() => editTalkgroup(tg.id)}>Edit</Button>
+                  <Button variant="outlined" color="secondary" className={classes.actionButton} onClick={() => deleteTalkgroup(tg.id)}>Delete</Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <Box mt={3} display="flex" justifyContent="center">
+        <Button variant="contained" color="primary" onClick={onBack}>Back to Main Page</Button>
+      </Box>
+    </Container>
   );
 }
 
