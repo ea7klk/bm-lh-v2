@@ -32,6 +32,8 @@ function AdminPage({ onBack, apiBaseUrl }) {
   const [talkgroups, setTalkgroups] = useState([]);
   const [newTalkgroup, setNewTalkgroup] = useState({ country: '', talkgroup: '', name: '' });
   const [token, setToken] = useState('');
+  const [editingTalkgroup, setEditingTalkgroup] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
 
   const loadTalkgroups = useCallback(async () => {
     try {
@@ -60,6 +62,11 @@ function AdminPage({ onBack, apiBaseUrl }) {
     }
   };
 
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    login();
+  };
+
   const addTalkgroup = async () => {
     try {
       await axios.post(`${apiBaseUrl}/api/country-talkgroups`, newTalkgroup, {
@@ -72,17 +79,23 @@ function AdminPage({ onBack, apiBaseUrl }) {
     }
   };
 
-  const editTalkgroup = async (id) => {
-    const updatedTalkgroup = {
-      country: prompt('Enter new country:'),
-      talkgroup: prompt('Enter new talkgroup:'),
-      name: prompt('Enter new name:')
-    };
+  const openEditDialog = (talkgroup) => {
+    setEditingTalkgroup(talkgroup);
+    setOpenDialog(true);
+  };
+
+  const closeEditDialog = () => {
+    setEditingTalkgroup(null);
+    setOpenDialog(false);
+  };
+
+  const editTalkgroup = async () => {
     try {
-      await axios.put(`${apiBaseUrl}/api/country-talkgroups/${id}`, updatedTalkgroup, {
+      await axios.put(`${apiBaseUrl}/api/country-talkgroups/${editingTalkgroup.id}`, editingTalkgroup, {
         headers: { Authorization: token }
       });
       loadTalkgroups();
+      closeEditDialog();
     } catch (error) {
       console.error('Error updating talkgroup:', error);
     }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Select, MenuItem, FormControl, InputLabel, Box, Button } from '@material-ui/core';
+import { Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Select, MenuItem, FormControl, InputLabel, Box, Button, Link } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
@@ -158,7 +158,7 @@ function App() {
   return (
     <Container maxWidth="lg">
       <Typography variant="h2" component="h1" gutterBottom className={classes.title}>
-        Brandmeister Network Data
+        What's on in Brandmeister?
       </Typography>
       <Box display="flex" justifyContent="center" mb={3}>
         <FormControl style={{ marginRight: '20px' }}>
@@ -225,7 +225,7 @@ function App() {
       </Box>
       <footer className={classes.footer}>
         <Typography variant="body2" color="textSecondary">
-          This website is provided by Volker Kerkhoff, 41089 Dos Hermanas (Spain). We do not use cookies, neither own or third-party. This application tracks usage using Matomo and does not use any personal data that isn't already publicly available. The complete <a href="https://github.com/ea7klk/bm-lh-v2" target="_blank" rel="noopener noreferrer">source code is available on GitHub</a> and is under MIT license. Please contact me via GitHub issues or volker at ea7klk dot es
+          This website is provided by Volker Kerkhoff, 41089 Dos Hermanas (Spain). We do not use cookies, neither own or third-party. This application tracks usage using Matomo and does not use any personal data that isn't already publicly available. The complete <Link href="https://github.com/ea7klk/bm-lh-v2" target="_blank" rel="noopener noreferrer">source code is available on GitHub</Link> and is under MIT license. Please contact me via GitHub issues or volker at ea7klk dot es
         </Typography>
       </footer>
     </Container>
