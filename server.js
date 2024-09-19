@@ -220,6 +220,11 @@ brandmeisterSocket.on('error', (error) => {
   console.error('Brandmeister socket error:', error);
 });
 
+// Utility function to safely convert BigInt to number
+function safeBigIntToNumber(value) {
+  return typeof value === 'bigint' ? Number(value) : value;
+}
+
 io.on('connection', async (socket) => {
   console.log('New client connected');
 
@@ -313,10 +318,91 @@ io.on('connection', async (socket) => {
         take: 25
       });
 
-      socket.emit('groupedData', groupedData);
+      // Convert BigInt to Number
+      const processedData = groupedData.map(item => ({
+        ...item,
+        _count: {
+          destinationName: safeBigIntToNumber(item._count.destinationName)
+        },
+        _sum: {
+          duration: safeBigIntToNumber(item._sum.duration)
+        }
+      }));
+
+      socket.emit('groupedData', processedData);
     } catch (error) {
       console.error('Error fetching grouped data:', error);
       socket.emit('error', { message: 'Error fetching grouped data' });
+    }
+  });
+
+  // Updated getTalkgroups event handler
+  socket.on('getTalkgroups', async ({ continent, country }) => {
+    try {
+      let whereClause = {};
+      if (continent === 'Global') {
+        whereClause.country = 'Global';
+      } else if (country) {
+        whereClause.country = country;
+      }
+
+      const talkgroups = await prisma.countryTalkgroup.findMany({
+        where: whereClause,
+        select: { talkgroup: true, name: true },
+        orderBy: { talkgroup: 'asc' },
+      });
+
+      const formattedTalkgroups = talkgroups.map(tg => ({
+        label: `${tg.talkgroup} - ${tg.name}`,
+        value: tg.talkgroup
+      }));
+
+      socket.emit('talkgroups', formattedTalkgroups);
+    } catch (error) {
+      console.error('Error fetching talkgroups:', error);
+      socket.emit('error', { message: 'Error fetching talkgroups' });
+    }
+  });
+
+  socket.on('getTalkgroupHistogram', async ({ talkgroup }) => {
+    try {
+      const now = new Date();
+      const twelveHoursAgo = new Date(now - 12 * 60 * 60 * 1000);
+
+      const histogramData = await prisma.$queryRaw`
+        WITH RECURSIVE
+        time_intervals(interval_start) AS (
+          SELECT datetime(${twelveHoursAgo.toISOString()})
+          UNION ALL
+          SELECT datetime(interval_start, '+15 minutes')
+          FROM time_intervals
+          WHERE interval_start < ${now.toISOString()}
+        )
+        SELECT 
+          strftime('%Y-%m-%d %H:%M', time_intervals.interval_start) as timeInterval,
+          COUNT(lh.id) as count
+        FROM 
+          time_intervals
+        LEFT JOIN 
+          lh ON lh.timestamp >= time_intervals.interval_start 
+          AND lh.timestamp < datetime(time_intervals.interval_start, '+15 minutes')
+          AND lh.destinationId = ${parseInt(talkgroup)}
+        GROUP BY 
+          time_intervals.interval_start
+        ORDER BY 
+          time_intervals.interval_start
+      `;
+
+      // Convert BigInt to Number in the histogram data
+      const processedHistogramData = histogramData.map(item => ({
+        timeInterval: item.timeInterval,
+        count: safeBigIntToNumber(item.count)
+      }));
+
+      socket.emit('talkgroupHistogram', processedHistogramData);
+    } catch (error) {
+      console.error('Error fetching talkgroup histogram data:', error);
+      socket.emit('error', { message: 'Error fetching talkgroup histogram data' });
     }
   });
 

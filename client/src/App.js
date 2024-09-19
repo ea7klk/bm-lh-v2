@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Select, MenuItem, FormControl, InputLabel, Box, Button, Link } from '@material-ui/core';
+import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import { Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Select, MenuItem, FormControl, InputLabel, Box, Button } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { io } from 'socket.io-client';
 import AdminPage from './AdminPage';
+import TalkgroupHistogram from './TalkgroupHistogram';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -25,6 +27,9 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(2),
     backgroundColor: theme.palette.background.paper,
   },
+  navButton: {
+    margin: theme.spacing(1),
+  },
 }));
 
 // Matomo tracking function
@@ -35,7 +40,7 @@ const trackPageView = (url) => {
   }
 };
 
-function App() {
+function MainPage() {
   const classes = useStyles();
   const [data, setData] = useState([]);
   const [timeRange, setTimeRange] = useState('5m');
@@ -43,22 +48,6 @@ function App() {
   const [selectedContinent, setSelectedContinent] = useState('Global');
   const [countries, setCountries] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState('');
-  const [showAdminPage, setShowAdminPage] = useState(false);
-
-  useEffect(() => {
-    // Initialize Matomo
-    window._paq = window._paq || [];
-    (function() {
-      var u = process.env.REACT_APP_MATOMO_URL;
-      window._paq.push(['setTrackerUrl', u+'matomo.php']);
-      window._paq.push(['setSiteId', process.env.REACT_APP_MATOMO_SITE_ID]);
-      var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
-      g.type='text/javascript'; g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
-    })();
-
-    // Track initial page view
-    trackPageView('/');
-  }, []);
 
   const fetchData = useCallback(() => {
     socket.emit('getGroupedData', { timeRange, continent: selectedContinent, country: selectedCountry });
@@ -150,10 +139,6 @@ function App() {
     },
   };
 
-  if (showAdminPage) {
-    return <AdminPage onBack={() => setShowAdminPage(false)} />;
-  }
-
   return (
     <Container maxWidth="lg">
       <Typography variant="h2" component="h1" gutterBottom className={classes.title}>
@@ -217,17 +202,58 @@ function App() {
           </TableBody>
         </Table>
       </TableContainer>
-      <Box mt={3} display="flex" justifyContent="center">
-        <Button variant="contained" color="primary" onClick={() => setShowAdminPage(true)}>
-          Admin Page
-        </Button>
-      </Box>
-      <footer className={classes.footer}>
-        <Typography variant="body2" color="textSecondary">
-          This website is provided by Volker Kerkhoff, 41089 Dos Hermanas (Spain). We do not use cookies, neither own or third-party. This application tracks usage using Matomo and does not use any personal data that isn't already publicly available. The complete <Link href="https://github.com/ea7klk/bm-lh-v2" target="_blank" rel="noopener noreferrer">source code is available on GitHub</Link> and is under MIT license. Please contact me via GitHub issues or volker at ea7klk dot es
-        </Typography>
-      </footer>
     </Container>
+  );
+}
+
+function App() {
+  const classes = useStyles();
+  const [showAdminPage, setShowAdminPage] = useState(false);
+
+  useEffect(() => {
+    // Initialize Matomo
+    window._paq = window._paq || [];
+    (function() {
+      var u = process.env.REACT_APP_MATOMO_URL;
+      window._paq.push(['setTrackerUrl', u+'matomo.php']);
+      window._paq.push(['setSiteId', process.env.REACT_APP_MATOMO_SITE_ID]);
+      var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+      g.type='text/javascript'; g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+    })();
+
+    // Track initial page view
+    trackPageView('/');
+  }, []);
+
+  return (
+    <Router>
+      <Container maxWidth="lg">
+        <Box display="flex" justifyContent="center" mb={3}>
+          <Button component={Link} to="/" variant="contained" color="primary" className={classes.navButton}>
+            Main Page
+          </Button>
+          <Button component={Link} to="/histogram" variant="contained" color="primary" className={classes.navButton}>
+            Talkgroup Histogram
+          </Button>
+          <Button variant="contained" color="primary" onClick={() => setShowAdminPage(true)} className={classes.navButton}>
+            Admin Page
+          </Button>
+        </Box>
+
+        <Routes>
+          <Route path="/" element={<MainPage />} />
+          <Route path="/histogram" element={<TalkgroupHistogram />} />
+        </Routes>
+
+        {showAdminPage && <AdminPage onBack={() => setShowAdminPage(false)} />}
+
+        <footer className={classes.footer}>
+          <Typography variant="body2" color="textSecondary">
+            This website is provided by Volker Kerkhoff, 41089 Dos Hermanas (Spain). We do not use cookies, neither own or third-party. This application tracks usage using Matomo and does not use any personal data that isn't already publicly available. The complete <a href="https://github.com/ea7klk/bm-lh-v2" target="_blank" rel="noopener noreferrer">source code is available on GitHub</a> and is under MIT license. Please contact me via GitHub issues or volker at ea7klk dot es
+          </Typography>
+        </footer>
+      </Container>
+    </Router>
   );
 }
 
