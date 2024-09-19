@@ -9,7 +9,7 @@ const csv = require('csv-parser');
 const path = require('path');
 const http = require('http');
 const express = require('express');
-const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 const cors = require('cors');
@@ -325,6 +325,11 @@ io.on('connection', async (socket) => {
   });
 });
 
+// Function to hash password using SHA-256
+function hashPassword(password) {
+  return crypto.createHash('sha256').update(password).digest('hex');
+}
+
 // Middleware to check password
 const checkPassword = (req, res, next) => {
   console.log('Checking password...');
@@ -333,7 +338,8 @@ const checkPassword = (req, res, next) => {
     console.error('ADMIN_PASSWORD not set in environment variables');
     return res.status(500).json({ error: 'Server configuration error' });
   }
-  if (bcrypt.compareSync(password, process.env.ADMIN_PASSWORD)) {
+  const hashedPassword = hashPassword(password);
+  if (hashedPassword === process.env.ADMIN_PASSWORD) {
     console.log('Password check passed');
     next();
   } else {
