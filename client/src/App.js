@@ -8,7 +8,7 @@ import AdminPage from './AdminPage';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-const API_BASE_URL = window.env && window.env.REACT_APP_API_URL ? window.env.REACT_APP_API_URL : process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const socket = io(API_BASE_URL, {
   transports: ['websocket', 'polling'],
   path: '/socket.io',
@@ -49,9 +49,9 @@ function App() {
     // Initialize Matomo
     window._paq = window._paq || [];
     (function() {
-      var u = window.env && window.env.REACT_APP_MATOMO_URL ? window.env.REACT_APP_MATOMO_URL : process.env.REACT_APP_MATOMO_URL;
+      var u = process.env.REACT_APP_MATOMO_URL;
       window._paq.push(['setTrackerUrl', u+'matomo.php']);
-      window._paq.push(['setSiteId', window.env && window.env.REACT_APP_MATOMO_SITE_ID ? window.env.REACT_APP_MATOMO_SITE_ID : process.env.REACT_APP_MATOMO_SITE_ID]);
+      window._paq.push(['setSiteId', process.env.REACT_APP_MATOMO_SITE_ID]);
       var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
       g.type='text/javascript'; g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
     })();
