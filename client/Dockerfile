@@ -1,5 +1,5 @@
 # Use an official Node runtime as the base image
-FROM node:16 as build
+FROM node:16
 
 # Set the working directory in the container
 WORKDIR /usr/src/app
@@ -16,14 +16,21 @@ COPY . .
 # Build the React app
 RUN npm run build
 
-# Production environment
-FROM nginx:stable-alpine
+# Install serve to run the application
+RUN npm install -g serve
 
-# Copy the build output to replace the default nginx contents.
-COPY --from=build /usr/src/app/build /usr/share/nginx/html
+# Expose the port the app runs on
+EXPOSE 3000
 
-# Expose port 80
-EXPOSE 80
+# Create a script to inject environment variables
+RUN echo '#!/bin/sh\n\
+echo "window.env = {" > /usr/src/app/build/env-config.js\n\
+echo "  REACT_APP_API_URL: \"$REACT_APP_API_URL\"," >> /usr/src/app/build/env-config.js\n\
+echo "}" >> /usr/src/app/build/env-config.js\n\
+serve -s build' > /usr/src/app/start.sh
 
-# Start Nginx server
-CMD ["nginx", "-g", "daemon off;"]
+# Make the script executable
+RUN chmod +x /usr/src/app/start.sh
+
+# Start the application
+CMD ["/usr/src/app/start.sh"]

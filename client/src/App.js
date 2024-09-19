@@ -3,13 +3,16 @@ import { Container, Typography, Table, TableBody, TableCell, TableContainer, Tab
 import { makeStyles } from '@material-ui/core/styles';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import io from 'socket.io-client';
+import { io } from 'socket.io-client';
 import AdminPage from './AdminPage';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-const socket = io(API_BASE_URL);
+const socket = io(API_BASE_URL, {
+  transports: ['websocket', 'polling'],
+  path: '/socket.io',
+});
 
 const useStyles = makeStyles((theme) => ({
   title: {
