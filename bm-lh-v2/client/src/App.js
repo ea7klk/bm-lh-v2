@@ -24,7 +24,7 @@ function App() {
   return (
     <Container maxWidth="md">
       <Typography variant="h2" component="h1" gutterBottom>
-        Pretty DB App
+        BM-LH-V2 App
       </Typography>
       {loading ? (
         <CircularProgress />
