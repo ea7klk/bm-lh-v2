@@ -56,7 +56,7 @@ The client is a React application and uses:
 
    For ADMIN_PASSWORD:
    ```
-   node -e "console.log(require('bcrypt').hashSync('your-admin-password', 10))"
+   node -e "console.log(require('crypto').createHash('sha256').update('your-admin-password').digest('hex'))"
    ```
    Replace 'your-admin-password' with your desired admin password. Copy the output and paste it as the value for ADMIN_PASSWORD in your .env file.
 
@@ -132,7 +132,7 @@ Key environment variables include:
 - `PORT`: The port on which the server will run (default: 5001)
 - `DATABASE_URL`: URL for the SQLite database
 - `JWT_SECRET`: Secret key for JWT authentication (generate as shown in Setup and Installation)
-- `ADMIN_PASSWORD`: Hashed password for admin access (generate as shown in Setup and Installation)
+- `ADMIN_PASSWORD`: SHA-256 hashed password for admin access (generate as shown in Setup and Installation)
 - `CLIENT_URL`: URL of the client application
 - `REACT_APP_API_URL`: URL of the server API (for the client)
 - `REACT_APP_MATOMO_URL`: URL for Matomo analytics
