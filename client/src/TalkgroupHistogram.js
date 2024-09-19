@@ -97,21 +97,30 @@ function TalkgroupHistogram() {
       const startTime = new Date(endTime.getTime() - 12 * 60 * 60 * 1000);
 
       // Generate all hour intervals for the last 12 hours
-      const allIntervals = [];
+      const intervals = [];
       for (let d = new Date(startTime); d <= endTime; d.setHours(d.getHours() + 1)) {
-        allIntervals.push(d.getTime());
+        intervals.push(d.getTime());
       }
 
-      // Create a map of existing data
-      const dataMap = new Map(data.map(item => [Math.floor(item.timeInterval / 3600000) * 3600000, item.count]));
+      // Count events for each interval
+      const eventCounts = new Array(intervals.length).fill(0);
+      data.forEach(event => {
+        const eventTime = parseInt(event.timestamp);
+        const index = intervals.findIndex((interval, i) => 
+          eventTime >= interval && (i === intervals.length - 1 || eventTime < intervals[i + 1])
+        );
+        if (index !== -1) {
+          eventCounts[index]++;
+        }
+      });
 
-      // Fill in missing intervals with zero count
-      const filledData = allIntervals.map(interval => ({
+      // Create histogram data
+      const histogramData = intervals.map((interval, index) => ({
         timeInterval: interval,
-        count: dataMap.get(interval) || 0
+        count: eventCounts[index]
       }));
 
-      setHistogramData(filledData);
+      setHistogramData(histogramData);
     });
 
     socket.on('error', (error) => {
