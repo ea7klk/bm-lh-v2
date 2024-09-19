@@ -38,6 +38,8 @@ function AdminPage({ onBack }) {
 
   const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
+  console.log('API Base URL:', apiBaseUrl); // Log the API base URL
+
   const loadTalkgroups = useCallback(async () => {
     try {
       const response = await axios.get(`${apiBaseUrl}/api/country-talkgroups`, {
@@ -57,11 +59,14 @@ function AdminPage({ onBack }) {
 
   const login = async () => {
     try {
+      console.log('Attempting login...'); // Log login attempt
       const response = await axios.post(`${apiBaseUrl}/api/login`, { password });
+      console.log('Login response:', response.data); // Log the response
       setToken(response.data.token);
       setIsLoggedIn(true);
     } catch (error) {
-      alert('Login failed');
+      console.error('Login failed:', error.response ? error.response.data : error.message);
+      alert('Login failed: ' + (error.response ? error.response.data.error : error.message));
     }
   };
 

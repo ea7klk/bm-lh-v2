@@ -327,10 +327,17 @@ io.on('connection', async (socket) => {
 
 // Middleware to check password
 const checkPassword = (req, res, next) => {
+  console.log('Checking password...');
   const { password } = req.body;
+  if (!process.env.ADMIN_PASSWORD) {
+    console.error('ADMIN_PASSWORD not set in environment variables');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
   if (bcrypt.compareSync(password, process.env.ADMIN_PASSWORD)) {
+    console.log('Password check passed');
     next();
   } else {
+    console.log('Password check failed');
     res.status(401).json({ error: 'Unauthorized' });
   }
 };
@@ -349,6 +356,7 @@ const verifyToken = (req, res, next) => {
 
 // Routes for CountryTalkgroup management
 app.post('/api/login', checkPassword, (req, res) => {
+  console.log('Login successful, generating token...');
   const token = jwt.sign({ id: 'admin' }, process.env.JWT_SECRET, {
     expiresIn: 86400 // expires in 24 hours
   });
@@ -360,6 +368,7 @@ app.get('/api/country-talkgroups', verifyToken, async (req, res) => {
     const talkgroups = await prisma.countryTalkgroup.findMany();
     res.json(talkgroups);
   } catch (error) {
+    console.error('Error fetching talkgroups:', error);
     res.status(500).json({ error: 'Error fetching talkgroups' });
   }
 });
@@ -372,6 +381,7 @@ app.post('/api/country-talkgroups', verifyToken, async (req, res) => {
     });
     res.json(newTalkgroup);
   } catch (error) {
+    console.error('Error creating talkgroup:', error);
     res.status(500).json({ error: 'Error creating talkgroup' });
   }
 });
@@ -386,6 +396,7 @@ app.put('/api/country-talkgroups/:id', verifyToken, async (req, res) => {
     });
     res.json(updatedTalkgroup);
   } catch (error) {
+    console.error('Error updating talkgroup:', error);
     res.status(500).json({ error: 'Error updating talkgroup' });
   }
 });
@@ -398,6 +409,7 @@ app.delete('/api/country-talkgroups/:id', verifyToken, async (req, res) => {
     });
     res.json({ message: 'Talkgroup deleted successfully' });
   } catch (error) {
+    console.error('Error deleting talkgroup:', error);
     res.status(500).json({ error: 'Error deleting talkgroup' });
   }
 });
