@@ -57,7 +57,14 @@ function TalkgroupHistogram() {
     if (selectedTalkgroup) {
       console.log('Fetching histogram data for talkgroup:', selectedTalkgroup);
       const timezoneOffset = -new Date().getTimezoneOffset();
-      socket.emit('getTalkgroupHistogram', { talkgroup: selectedTalkgroup, timezoneOffset });
+      const endTime = new Date();
+      const startTime = new Date(endTime.getTime() - 12 * 60 * 60 * 1000); // 12 hours ago
+      socket.emit('getTalkgroupHistogram', { 
+        talkgroup: selectedTalkgroup, 
+        timezoneOffset,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString()
+      });
     }
   }, [selectedTalkgroup]);
 
@@ -86,14 +93,25 @@ function TalkgroupHistogram() {
       console.log('Received histogram data:', data);
       const now = new Date();
       now.setMinutes(0, 0, 0); // Set to the start of the current hour
-      const latestInterval = now.toISOString().slice(0, 13) + ':00'; // Format: YYYY-MM-DDTHH:00
-      
-      // Ensure the histogram includes the latest interval
-      if (data.length > 0 && data[data.length - 1].timeInterval !== latestInterval) {
-        data.push({ timeInterval: latestInterval, count: 0 });
+      const endTime = now;
+      const startTime = new Date(endTime.getTime() - 12 * 60 * 60 * 1000);
+
+      // Generate all hour intervals for the last 12 hours
+      const allIntervals = [];
+      for (let d = new Date(startTime); d <= endTime; d.setHours(d.getHours() + 1)) {
+        allIntervals.push(d.toISOString().slice(0, 13) + ':00');
       }
-      
-      setHistogramData(data);
+
+      // Create a map of existing data
+      const dataMap = new Map(data.map(item => [item.timeInterval, item.count]));
+
+      // Fill in missing intervals with zero count
+      const filledData = allIntervals.map(interval => ({
+        timeInterval: interval,
+        count: dataMap.get(interval) || 0
+      }));
+
+      setHistogramData(filledData);
     });
 
     socket.on('error', (error) => {
@@ -141,9 +159,6 @@ function TalkgroupHistogram() {
   const formatTimeInterval = (timeInterval) => {
     const date = new Date(timeInterval);
     return date.toLocaleString('en-US', { 
-      year: 'numeric', 
-      month: '2-digit', 
-      day: '2-digit', 
       hour: '2-digit',
       hour12: false
     });
@@ -170,8 +185,14 @@ function TalkgroupHistogram() {
       x: {
         title: {
           display: true,
-          text: 'Time Interval (Local Time)',
+          text: 'Hour (Local Time)',
         },
+        ticks: {
+          callback: function(value, index) {
+            // Show every 3rd label to prevent overcrowding
+            return index % 3 === 0 ? this.getLabelForValue(value) : '';
+          }
+        }
       },
       y: {
         title: {
@@ -223,7 +244,7 @@ function TalkgroupHistogram() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Time Interval (Local Time)</TableCell>
+              <TableCell>Hour (Local Time)</TableCell>
               <TableCell align="right">Call Count</TableCell>
             </TableRow>
           </TableHead>
