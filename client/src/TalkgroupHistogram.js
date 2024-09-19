@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Typography, Select, MenuItem, FormControl, InputLabel, Box } from '@material-ui/core';
+import { Container, Typography, Select, MenuItem, FormControl, InputLabel, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
@@ -17,6 +17,9 @@ const useStyles = makeStyles((theme) => ({
   title: {
     textAlign: 'center',
     marginBottom: theme.spacing(3),
+  },
+  tableContainer: {
+    marginTop: theme.spacing(3),
   },
 }));
 
@@ -194,6 +197,31 @@ function TalkgroupHistogram() {
       </Box>
 
       <Bar data={chartData} options={chartOptions} />
+
+      <TableContainer component={Paper} className={classes.tableContainer}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Time Interval</TableCell>
+              <TableCell align="right">Call Count</TableCell>
+              <TableCell align="right">Total Duration (s)</TableCell>
+              <TableCell align="right">Unique Callers</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {histogramData.map((row) => (
+              <TableRow key={row.timeInterval}>
+                <TableCell component="th" scope="row">
+                  {row.timeInterval}
+                </TableCell>
+                <TableCell align="right">{row.count}</TableCell>
+                <TableCell align="right">{row.totalDuration.toFixed(2)}</TableCell>
+                <TableCell align="right">{row.uniqueSourceCalls}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Container>
   );
 }

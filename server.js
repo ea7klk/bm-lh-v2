@@ -374,18 +374,20 @@ io.on('connection', async (socket) => {
         time_intervals(interval_start) AS (
           SELECT datetime(${twelveHoursAgo.toISOString()})
           UNION ALL
-          SELECT datetime(interval_start, '+15 minutes')
+          SELECT datetime(interval_start, '+30 minutes')
           FROM time_intervals
           WHERE interval_start < ${now.toISOString()}
         )
         SELECT 
           strftime('%Y-%m-%d %H:%M', time_intervals.interval_start) as timeInterval,
-          COUNT(lh.id) as count
+          COUNT(lh.id) as count,
+          COALESCE(SUM(lh.duration), 0) as totalDuration,
+          GROUP_CONCAT(DISTINCT lh.sourceCall) as uniqueSourceCalls
         FROM 
           time_intervals
         LEFT JOIN 
           lh ON lh.timestamp >= time_intervals.interval_start 
-          AND lh.timestamp < datetime(time_intervals.interval_start, '+15 minutes')
+          AND lh.timestamp < datetime(time_intervals.interval_start, '+30 minutes')
           AND lh.destinationId = ${parseInt(talkgroup)}
         GROUP BY 
           time_intervals.interval_start
@@ -396,7 +398,9 @@ io.on('connection', async (socket) => {
       // Convert BigInt to Number in the histogram data
       const processedHistogramData = histogramData.map(item => ({
         timeInterval: item.timeInterval,
-        count: safeBigIntToNumber(item.count)
+        count: safeBigIntToNumber(item.count),
+        totalDuration: safeBigIntToNumber(item.totalDuration),
+        uniqueSourceCalls: item.uniqueSourceCalls ? item.uniqueSourceCalls.split(',').length : 0
       }));
 
       socket.emit('talkgroupHistogram', processedHistogramData);
