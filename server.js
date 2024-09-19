@@ -365,15 +365,9 @@ io.on('connection', async (socket) => {
       const now = new Date();
       const twelveHoursAgo = new Date(now - 12 * 60 * 60 * 1000);
 
-      // Adjust start time to the nearest half hour in the past
-      twelveHoursAgo.setMinutes(twelveHoursAgo.getMinutes() >= 30 ? 30 : 0);
-      twelveHoursAgo.setSeconds(0);
-      twelveHoursAgo.setMilliseconds(0);
-
-      // Adjust end time to the current half hour
-      now.setMinutes(now.getMinutes() >= 30 ? 30 : 0);
-      now.setSeconds(0);
-      now.setMilliseconds(0);
+      // Round down to the nearest 30-minute interval
+      now.setMinutes(now.getMinutes() - now.getMinutes() % 30, 0, 0);
+      twelveHoursAgo.setMinutes(twelveHoursAgo.getMinutes() - twelveHoursAgo.getMinutes() % 30, 0, 0);
 
       const histogramData = await prisma.$queryRaw`
         WITH RECURSIVE
@@ -382,7 +376,7 @@ io.on('connection', async (socket) => {
           UNION ALL
           SELECT datetime(interval_start, '+30 minutes')
           FROM time_intervals
-          WHERE interval_start < ${now.toISOString()}
+          WHERE datetime(interval_start, '+30 minutes') <= ${now.toISOString()}
         )
         SELECT 
           strftime('%Y-%m-%d %H:%M', time_intervals.interval_start) as timeInterval,
@@ -390,8 +384,8 @@ io.on('connection', async (socket) => {
         FROM 
           time_intervals
         LEFT JOIN 
-          lh ON strftime('%Y-%m-%d %H:%M', lh.timestamp / 1000, 'unixepoch') >= strftime('%Y-%m-%d %H:%M', time_intervals.interval_start)
-          AND strftime('%Y-%m-%d %H:%M', lh.timestamp / 1000, 'unixepoch') < strftime('%Y-%m-%d %H:%M', datetime(time_intervals.interval_start, '+30 minutes'))
+          lh ON datetime(lh.timestamp / 1000, 'unixepoch') >= time_intervals.interval_start
+          AND datetime(lh.timestamp / 1000, 'unixepoch') < datetime(time_intervals.interval_start, '+30 minutes')
           AND lh.destinationId = ${parseFloat(talkgroup)}
         GROUP BY 
           time_intervals.interval_start
