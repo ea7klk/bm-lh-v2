@@ -206,7 +206,7 @@ brandmeisterSocket.on('mqtt', async (rawData) => {
     console.log(`Data inserted into database successfully, ID: ${result.id}`);
 
     insertCount++;
-    if (insertCount % 100 === 0) {
+    if (insertCount % 1000 === 0) {
       await cleanupOldRecords();
     }
 
