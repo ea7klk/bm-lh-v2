@@ -62,8 +62,8 @@ function TalkgroupHistogram() {
       socket.emit('getTalkgroupHistogram', { 
         talkgroup: selectedTalkgroup, 
         timezoneOffset,
-        startTime: startTime.toISOString(),
-        endTime: endTime.toISOString()
+        startTime: startTime.getTime(),
+        endTime: endTime.getTime()
       });
     }
   }, [selectedTalkgroup]);
@@ -99,11 +99,11 @@ function TalkgroupHistogram() {
       // Generate all hour intervals for the last 12 hours
       const allIntervals = [];
       for (let d = new Date(startTime); d <= endTime; d.setHours(d.getHours() + 1)) {
-        allIntervals.push(d.toISOString().slice(0, 13) + ':00');
+        allIntervals.push(d.getTime());
       }
 
       // Create a map of existing data
-      const dataMap = new Map(data.map(item => [item.timeInterval, item.count]));
+      const dataMap = new Map(data.map(item => [Math.floor(item.timeInterval / 3600000) * 3600000, item.count]));
 
       // Fill in missing intervals with zero count
       const filledData = allIntervals.map(interval => ({
@@ -159,7 +159,10 @@ function TalkgroupHistogram() {
   const formatTimeInterval = (timeInterval) => {
     const date = new Date(timeInterval);
     return date.toLocaleString('en-US', { 
+      month: 'numeric',
+      day: 'numeric',
       hour: '2-digit',
+      minute: '2-digit',
       hour12: false
     });
   };
@@ -185,7 +188,7 @@ function TalkgroupHistogram() {
       x: {
         title: {
           display: true,
-          text: 'Hour (Local Time)',
+          text: 'Time (Local)',
         },
         ticks: {
           callback: function(value, index) {
@@ -244,7 +247,7 @@ function TalkgroupHistogram() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Hour (Local Time)</TableCell>
+              <TableCell>Time (Local)</TableCell>
               <TableCell align="right">Call Count</TableCell>
             </TableRow>
           </TableHead>
