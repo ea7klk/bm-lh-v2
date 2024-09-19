@@ -1,7 +1,7 @@
 {
-  "name": "pretty-db-app",
+  "name": "bm-lh-v2",
   "version": "1.0.0",
-  "description": "A pretty application displaying Brandmeister network data",
+  "description": "An application displaying Brandmeister network data - Version 2",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

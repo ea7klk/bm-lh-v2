@@ -9,15 +9,7 @@ import AdminPage from './AdminPage';
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const getApiBaseUrl = () => {
-  const protocol = window.location.protocol;
-  const hostname = window.location.hostname;
-  const port = process.env.REACT_APP_API_PORT || '5001';
-
-  if (hostname === 'localhost' || /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(hostname)) {
-    return `${protocol}//${hostname}:${port}`;
-  } else {
-    return `${protocol}//bmapi.${hostname}`;
-  }
+  return process.env.REACT_APP_API_URL || 'http://localhost:5001';
 };
 
 const API_BASE_URL = getApiBaseUrl();
@@ -233,7 +225,7 @@ function App() {
       </Box>
       <footer className={classes.footer}>
         <Typography variant="body2" color="textSecondary">
-          This website is provided by Volker Kerkhoff, 41089 Dos Hermanas (Spain). We do not use cookies, neither own or third-party. This application tracks usage using Matomo and does not use any personal data that isn't already publicly available. The complete source code is available on GitHub and is under Creative Commons license. Please contact me via GitHub issues or volker at ea7klk dot es
+          This website is provided by Volker Kerkhoff, 41089 Dos Hermanas (Spain). We do not use cookies, neither own or third-party. This application tracks usage using Matomo and does not use any personal data that isn't already publicly available. The complete <a href="https://github.com/ea7klk/bm-lh-v2" target="_blank" rel="noopener noreferrer">source code is available on GitHub</a> and is under MIT license. Please contact me via GitHub issues or volker at ea7klk dot es
         </Typography>
       </footer>
     </Container>

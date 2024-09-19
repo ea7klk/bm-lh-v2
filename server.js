@@ -22,12 +22,13 @@ process.env.DATABASE_URL = `file:${path.join(__dirname, 'data', 'bm-lh.db')}`;
 const prisma = new PrismaClient();
 
 const PORT = process.env.PORT || 5001;
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000';
 
 const app = express();
 
 // Configure CORS
 app.use(cors({
-  origin: 'http://localhost:3000', // Allow requests from the React app
+  origin: CLIENT_URL,
   credentials: true,
 }));
 
@@ -40,7 +41,7 @@ const httpServer = http.createServer(app);
 // Create Socket.IO instance that works with the server
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: CLIENT_URL,
     methods: ["GET", "POST"],
     credentials: true
   }
